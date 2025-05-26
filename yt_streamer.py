@@ -7,10 +7,14 @@ import socketserver
 import urllib.parse
 import os
 
+from led_controller import LEDController
+
 YOUTUBE_URL = ""
 SAMPLE_RATE = 48000
 LIB_DIR = os.path.expanduser("/home/sm/Music")
 HTML_FILE = "templates/audio_player.html"
+
+LED_PINS = [14, 15, 18, 23, 24, 25, 7, 8, 1, 12]
 
 volume = 1.0
 paused = False
@@ -21,6 +25,8 @@ sd.default.device = "hw:2,0"
 sd.default.blocksize = 1024
 
 PORT = 8080
+
+led_controller = LEDController(LED_PINS, smoothing=0.5, gain=1.5)
 
 
 def load_html_template():
@@ -85,13 +91,14 @@ def audio_callback(outdata, frames, time, status):
         return
 
     if len(data) < bytes_needed:
-        print("short read")
+        #print("short read")
         data += b'\x00' * (bytes_needed - len(data))
         outdata[:] = np.frombuffer(data, dtype=np.int16).reshape(-1, 2) / 32768.0 * volume
         return
 
     audio = np.frombuffer(data, dtype=np.int16).reshape(-1, 2).astype(np.float32) / 32768.0
-    print(data)
+    #print(data)
+    led_controller.update(audio)
     outdata[:] = audio * volume
 
 
@@ -107,27 +114,44 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             html_content = load_html_template()
             self.wfile.write(html_content.encode('utf-8'))
+            return
 
         elif parsed_path.path == "/play":
             url = query.get("url", [""])[0]
             if url:
                 start_stream(url)
                 paused = False
-                self.respond("Playing URL: " + url)
+                #self.respond("Playing URL: " + url)
+                self.send_response(302)
+                self.send_header("Location", "/")
+                self.end_headers()
+                return
             else:
                 self.respond("Missing URL")
 
         elif parsed_path.path == "/pause":
             paused = True
-            self.respond("Paused")
+            #self.respond("Paused")
+            self.send_response(302)
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
 
         elif parsed_path.path == "/resume":
             paused = False
-            self.respond("Resumed")
+            #self.respond("Resumed")
+            self.send_response(302)
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
 
         elif parsed_path.path == "/stop":
             stop_stream()
-            self.respond("Stopped")
+            #self.respond("Stopped")
+            self.send_response(302)
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
 
         elif parsed_path.path == "/volume":
             val = query.get("value", [""])[0]
@@ -157,17 +181,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             for f in files:
                 self.wfile.write(f"<li><a href='/play_local?file={urllib.parse.quote(f)}'>{f}</a></li>".encode())
             self.wfile.write(b"</ul></body></html>")
+            return
 
         elif parsed_path.path == "/play_local":
             fname = query.get("file", [""])[0]
             if fname:
                 start_local_stream(urllib.parse.unquote(fname))
                 paused = False
-                self.respond("Playing local file: " + fname)
+                #self.respond("Playing local file: " + fname)
+                self.send_response(302)
+                self.send_header("Location", "/")
+                self.end_headers()
+                return
             else:
                 self.respond("Missing file name")
+        if parsed_path.path == "/style.css":
+            try:
+                css_path = os.path.join("templates", "style.css")
+                with open(css_path, "rb") as f:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/css")
+                    self.end_headers()
+                    self.wfile.write(f.read())
+            except FileNotFoundError:
+                self.send_error(404, "style.css not found")
+            return
         else:
             self.send_error(404, "Not Found")
+
 
     def respond(self, message):
         self.send_response(200)
