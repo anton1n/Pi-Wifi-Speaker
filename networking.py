@@ -10,6 +10,16 @@ HOTSPOT_PASSWORD = "12345678"
 AP_IFACE = "ap0"
 WLAN_IFACE = "wlan0"
 HTTP_PORT = 80
+HTML_FILE = "templates/index.html"
+
+def load_html_template():
+    try:
+        with open(HTML_FILE, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<html><body><h1>Error</h1><p>HTML template file not found!</p></body></html>"
+
+
 
 def run_cmd(cmd):
     print(">", " ".join(cmd))
@@ -85,22 +95,19 @@ class CaptivePortal(BaseHTTPRequestHandler):
                 threading.Thread(target=delayed_shutdown, daemon=True).start()
                 #stop_hotspot()
                 #sys.exit(0)
-
             else:
-                # serve the HTML form
-                self.send_response(200)
-                self.send_header("Content-Type","text/html")
-                self.end_headers()
-                self.wfile.write(b"""
-<html><body>
-  <h1>Configure Wi-Fi</h1>
-  <form action="/" method="get">
-    SSID: <input name="ssid"><br>
-    Password: <input name="password" type="password"><br>
-    <button type="submit">Connect</button>
-  </form>
-</body></html>
-""")
+                try:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html")
+                    self.end_headers()
+                    html_content = load_html_template()
+                    self.wfile.write(html_content.encode('utf-8'))
+
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_header("Content-Type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(f"Error loading form: {e}".encode())
         else:
             self.send_response(404)
             self.end_headers()

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Player</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Audio Player</h1>
+
+        <h2>YouTube</h2>
+        <form action='/play' method='get'>
+            <input type='text' name='url' placeholder='YouTube URL' size='50'/>
+            <input type='submit' value='Play'/>
+        </form>
+
+        <h2>Local Library</h2>
+        <div class="library-section">
+            <a href='/library' class="library-link">Browse library</a>
+            <button onclick="location.href='/pause'">Pause</button>
+            <button onclick="location.href='/resume'">Resume</button>
+            <button onclick="location.href='/stop'">Stop</button>
+            <button onclick="location.href='/volume?value=up'">Vol +</button>
+            <button onclick="location.href='/volume?value=down'">Vol -</button>
+        </div>
+    </div>
+</body>
+</html>

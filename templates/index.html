@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Configure Wi-Fi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Configure Wi-Fi</h1>
+        <form action="/connect" method="post">
+            <label>
+                SSID:
+                <input name="ssid" required>
+            </label>
+            <label>
+                Password:
+                <input name="password" type="password" required>
+            </label>
+            <button type="submit">Connect</button>
+        </form>
+    </div>
+</body>
+</html>
