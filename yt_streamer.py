@@ -121,6 +121,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if url:
                 start_stream(url)
                 paused = False
+                led_controller.stop_idle_animation()
                 #self.respond("Playing URL: " + url)
                 self.send_response(302)
                 self.send_header("Location", "/")
@@ -131,6 +132,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         elif parsed_path.path == "/pause":
             paused = True
+            led_controller.start_idle_animation()
             #self.respond("Paused")
             self.send_response(302)
             self.send_header("Location", "/")
@@ -139,6 +141,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         elif parsed_path.path == "/resume":
             paused = False
+            led_controller.stop_idle_animation()
             #self.respond("Resumed")
             self.send_response(302)
             self.send_header("Location", "/")
@@ -147,6 +150,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         elif parsed_path.path == "/stop":
             stop_stream()
+            led_controller.start_idle_animation()
             #self.respond("Stopped")
             self.send_response(302)
             self.send_header("Location", "/")
@@ -177,9 +181,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
             self.end_headers()
-            self.wfile.write(b"<html><body><h1>Library</h1><ul>")
+            #self.wfile.write(b"<html><head><link rel='stylesheet' href='templates/style.css'></head><body><h1>Library</h1><ul>")
+            #for f in files:
+            #    self.wfile.write(f"<li><a href='/play_local?file={urllib.parse.quote(f)}'>{f}</a></li>".encode())
+            #self.wfile.write(b"</ul></body></html>")
+            self.wfile.write(b"<html><head>"
+                          b"<meta charset='utf-8'>"
+                          b"<title>Library</title>"
+                          b"<link rel='stylesheet' href='/style.css'>"
+                          b"</head><body>"
+                          b"<h1>Library</h1><ul>")
             for f in files:
-                self.wfile.write(f"<li><a href='/play_local?file={urllib.parse.quote(f)}'>{f}</a></li>".encode())
+                 self.wfile.write(f"<li><a href='/play_local?file={urllib.parse.quote(f)}'>{f}</a></li>".encode())
+            self.wfile.write(b"</ul></body></html>")
             self.wfile.write(b"</ul></body></html>")
             return
 
@@ -188,6 +202,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if fname:
                 start_local_stream(urllib.parse.unquote(fname))
                 paused = False
+                led_controller.stop_idle_animation()
                 #self.respond("Playing local file: " + fname)
                 self.send_response(302)
                 self.send_header("Location", "/")

@@ -4,6 +4,7 @@ import sys
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
+import os
 
 HOTSPOT_NAME = "Pi4-AP"
 HOTSPOT_PASSWORD = "12345678"
@@ -108,6 +109,18 @@ class CaptivePortal(BaseHTTPRequestHandler):
                     self.send_header("Content-Type", "text/plain")
                     self.end_headers()
                     self.wfile.write(f"Error loading form: {e}".encode())
+
+        elif p.path == "/style.css":
+            css_path = os.path.join("templates", "style.css")
+            if os.path.isfile(css_path):
+                with open(css_path, "rb") as f:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/css")
+                    self.end_headers()
+                    self.wfile.write(f.read())
+            else:
+                self.send_error(404, "style.css not found")
+
         else:
             self.send_response(404)
             self.end_headers()
